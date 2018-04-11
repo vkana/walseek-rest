@@ -13,6 +13,11 @@ exports.list_all_products = function(req, res) {
 
 exports.create_a_product = function(req, res) {
   var new_product = new Product(req.body);
+  Product.remove({
+      sku: req.body.sku
+    }, function(err, product) {
+    });
+
   new_product.save(function(err, product) {
     if (err)
       res.send(err);
