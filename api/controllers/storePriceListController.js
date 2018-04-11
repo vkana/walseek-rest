@@ -55,7 +55,9 @@ const searchStores = async (upc, start, numStores) => {
   });
 
   await Promise.all(promiseArray).then(resultArray => {
-    storePrices = resultArray;
+    storePrices = resultArray.filter(s => s && s.price)
+                            .sort((a, b) => {return a.price - b.price})
+                            .slice(0,20);
   })
 
   return storePrices;
@@ -66,7 +68,6 @@ exports.search_stores = async (req, res) => {
   let start = parseInt(req.query.start) || 0;
   let numStores = parseInt(req.query.stores) || 100;
   let storePrices = await searchStores(upc, start, numStores);
-  storePrices = storePrices.filter(s => s && s.price);
   let resp = {
     item,
     storePrices
