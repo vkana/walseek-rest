@@ -4,18 +4,23 @@ var mongoose = require('mongoose'),
   Product = mongoose.model('Products');
 
 exports.list_all_products = function(req, res) {
-  Product.find({}, function(err, product) {
-    if (err)
-      res.send(err);
-    res.json(product);
-  });
-};
+   Product.find({})
+   .sort('-createdDate')
+   .limit(parseInt(req.query.count) || null)
+   .exec(function(err, product) {
+     if (err)
+       res.send(err);
+     res.json(product);
+   });
+ };
 
 exports.create_a_product = function(req, res) {
   var new_product = new Product(req.body);
   Product.remove({
       sku: req.body.sku
     }, function(err, product) {
+      if (err) {
+      }
     });
 
   new_product.save(function(err, product) {

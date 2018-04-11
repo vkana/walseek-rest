@@ -7,7 +7,6 @@ module.exports = function(app) {
     .get(productList.list_all_products)
     .post(productList.create_a_product);
 
-
   app.route('/products/:productId')
     .get(productList.read_a_product)
     .put(productList.update_a_product)
