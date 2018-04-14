@@ -14,9 +14,7 @@ const wmStoreSearch = (upc, store) => {
   return axios.get(url, {
     params: {storeId: store.no}
   })
-  .then(response =>
-  {
-
+  .then(response =>  {
     let data = response.data.data;
     if (data.inStore && data.inStore.price && data.inStore.price.priceInCents) {
       storePrice = {
@@ -45,10 +43,7 @@ const wmStoreSearch = (upc, store) => {
 
 const searchStores = async (upc, start, numStores) => {
   let allStores = stores.allStores;
-  let storePrices = [];
-  let promiseArray = [];
-  let errorCount = 0;
-  item = {};
+  let [storePrices, promiseArray, errorCount, item] = [[], [], 0, {}];
 
   allStores.slice(start, start + numStores).map(store => {
     promiseArray.push(wmStoreSearch(upc, store).catch(err=>{errorCount++}));
