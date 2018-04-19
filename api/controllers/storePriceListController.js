@@ -25,7 +25,8 @@ const wmStoreSearch = (upc, store) => {
         upc: data.common.productId.upca,
         url: data.common.productUrl,
         bsUrl: `https://www.brickseek.com/walmart-inventory-checker?sku=${data.common.productId.wwwItemId}`,
-        offerType: data.common.offerType
+        offerType: data.common.offerType,
+        pickupToday: data.common.storePickupAvailableToday || false
       };
     }
 
@@ -58,8 +59,8 @@ exports.search_stores = async (req, res) => {
   let storePrices = await searchStores(upc, start, numStores);
   let item = {};
   if (storePrices && storePrices.length >0) {
-    item = (({name, sku, upc, url, bsUrl, offerType}) => ({name, sku, upc, url, bsUrl, offerType}))(storePrices[0]);
-    storePrices = storePrices.map(s => {return {no:s.no, address: s.address, zip:s.zip, price:s.price, stock:s.stock}});
+    item = (({name, sku, upc, url, bsUrl, offerType, pickupToday}) => ({name, sku, upc, url, bsUrl, offerType, pickupToday}))(storePrices[0]);
+    storePrices = storePrices.map(s => {return {no:s.no, address: s.address, zip:s.zip, price:s.price, stock:s.stock, pickupToday: s.pickupToday}});
   }
   else {
     storePrices=[];
