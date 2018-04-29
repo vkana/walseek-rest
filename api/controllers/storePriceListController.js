@@ -37,12 +37,19 @@ const wmStoreSearch = (upc, store) => {
   });
 }
 
-const searchStores = async (upc, start, numStores) => {
+const searchStores = async (upc, start, numStores, zip) => {
   if (upc.length < 12) {
     upc = await getUPC(upc);
   }
+  let allStores = [];
+  let sliceStores =5;
+  if (zip) {
+    allStores = await storesByZip(zip);
+    sliceStores = 100;
+  } else {
+    allStores = stores.allStores;
+  }
 
-  let allStores = stores.allStores;
   let [storePrices, promiseArray, errorCount] = [[], [], 0];
   allStores.slice(start, start + numStores).map(store => {
     promiseArray.push(wmStoreSearch(upc, store).catch(err=>{errorCount++}));
@@ -51,7 +58,7 @@ const searchStores = async (upc, start, numStores) => {
   await Promise.all(promiseArray).then(resultArray => {
     storePrices = resultArray.filter(s => s && s.price)
                             .sort((a, b) => {return a.price - b.price})
-                            .slice(0,5);
+                            .slice(0,sliceStores);
   })
 
   return storePrices;
@@ -64,11 +71,30 @@ const getUPC = async (sku) => {
   return resp.data.upc;
 };
 
+const storesByZip = async (zip) => {
+  const apiKey = secrets.apiKey;
+  let stores = [];
+  const url = `https://api.walmartlabs.com/v1/stores?format=json&zip=${zip}&apiKey=${apiKey}`;
+  let resp = await axios.get(url);
+  if (resp.data && resp.data.length > 0) {
+    stores = resp.data.map(store => {
+      let theStore = {};
+      theStore.no = store.no;
+      theStore.description = store.name;
+      theStore.address = store.streetAddress + ', ' + store.city + ' ' + store.stateProvCode;
+      theStore.zip = store.zip;
+      return theStore;
+    })
+  }
+  return stores;
+};
+
 exports.search_stores = async (req, res) => {
   let upc = req.params.productId;
   let start = parseInt(req.query.start) || 0;
   let numStores = parseInt(req.query.stores) || 100;
-  let storePrices = await searchStores(upc, start, numStores);
+  let zip = parseInt(req.query.zip) || null;
+  let storePrices = await searchStores(upc, start, numStores, zip);
   let item = {};
   if (storePrices && storePrices.length >0) {
     item = (({name, sku, upc, url, bsUrl, offerType, pickupToday}) => ({name, sku, upc, url, bsUrl, offerType, pickupToday}))(storePrices[0]);
