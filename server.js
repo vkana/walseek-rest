@@ -12,9 +12,9 @@ const  mongoose = require('mongoose'),
 let allowCrossDomain = (req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Content-Length');
     // intercept OPTIONS method
-    if ('OPTIONS' == req.method) {
+    if ('OPTIONS' === req.method) {
       res.sendStatus(200);
     }
     else {
