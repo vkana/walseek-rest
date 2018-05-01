@@ -16,8 +16,7 @@ let allowCrossDomain = (req, res, next) => {
     }
 };
 app.use(allowCrossDomain);
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
 
 const dbConnString = secrets.dbConnString;
 
@@ -25,6 +24,8 @@ const  mongoose = require('mongoose'),
   Product = require('./api/models/productListModel'), //created model loading here
   bodyParser = require('body-parser');
 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 // mongoose instance connection url connection
 mongoose.Promise = global.Promise;
 mongoose.connect(dbConnString);
