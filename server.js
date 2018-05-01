@@ -3,12 +3,6 @@ let express = require('express'),
   app = express(),
   port = process.env.PORT || 3001;
 
-const dbConnString = secrets.dbConnString;
-
-const  mongoose = require('mongoose'),
-  Product = require('./api/models/productListModel'), //created model loading here
-  bodyParser = require('body-parser');
-
 let allowCrossDomain = (req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
@@ -21,29 +15,24 @@ let allowCrossDomain = (req, res, next) => {
       next();
     }
 };
+app.use(allowCrossDomain);
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
-// let noCache = (req, res, next) => {
-//   req.headers['if-none-match'] = '';
-//   req.headers['if-modified-since'] = '';
-//   next();
-// }
+const dbConnString = secrets.dbConnString;
 
+const  mongoose = require('mongoose'),
+  Product = require('./api/models/productListModel'), //created model loading here
+  bodyParser = require('body-parser');
 
 // mongoose instance connection url connection
 mongoose.Promise = global.Promise;
 mongoose.connect(dbConnString);
 
-
-app.use(allowCrossDomain);
 app.get('/*', function(req, res, next){
   res.setHeader('Last-Modified', (new Date()).toUTCString());
   next();
 });
-//app.disable('etag');
-//app.use(noCache);
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
 
 var productListRoutes = require('./api/routes/productListRoutes'); //importing route
 var storePriceRoutes = require('./api/routes/storePriceListRoutes'); //importing route
