@@ -4,4 +4,7 @@ module.exports = function(app) {
 
   app.route('/stores-by-code/:productId')
     .get(storePriceList.search_stores);
+
+    app.route('/upc/:sku')
+      .get(storePriceList.get_upc);
 };

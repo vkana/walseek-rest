@@ -38,9 +38,6 @@ const wmStoreSearch = (upc, store) => {
 }
 
 const searchStores = async (upc, start, numStores, zip) => {
-  if (upc.length < 12) {
-    upc = await getUPC(upc);
-  }
   let allStores = [];
   let sliceStores =5;
   if (zip) {
@@ -63,13 +60,6 @@ const searchStores = async (upc, start, numStores, zip) => {
 
   return storePrices;
 }
-
-const getUPC = async (sku) => {
-  const apiKey = secrets.apiKey;
-  const url = `https://api.walmartlabs.com/v1/items/${sku}?apiKey=${apiKey}`;
-  let resp = await axios.get(url);
-  return resp.data.upc;
-};
 
 const storesByZip = async (zip) => {
   const apiKey = secrets.apiKey;
@@ -107,6 +97,17 @@ exports.search_stores = async (req, res) => {
   let resp = {
     item,
     storePrices
+  };
+  res.json(resp);
+};
+
+exports.get_upc = async (req, res) => {
+  let sku = req.params.sku;
+  const apiKey = secrets.apiKey;
+  const url = `https://api.walmartlabs.com/v1/items/${sku}?apiKey=${apiKey}`;
+  let response = await axios.get(url);
+  let resp = {
+    "upc": response.data.upc
   };
   res.json(resp);
 };
