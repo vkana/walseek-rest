@@ -54,7 +54,7 @@ const searchStores = async (upc, start, numStores, zip) => {
   });
 
   await Promise.all(promiseArray).then(resultArray => {
-    storePrices = resultArray.filter(s => s && s.price)
+    storePrices = resultArray.filter(s => s && s.price && s.stock === 'In Stock')
                             .sort((a, b) => {return a.price - b.price})
                             .slice(0,sliceStores);
   })
