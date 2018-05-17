@@ -28,10 +28,14 @@ const wmStoreSearch = (upc, store) => {
         bsUrl: `https://www.brickseek.com/walmart-inventory-checker?sku=${data.common.productId.wwwItemId}`,
         offerType: data.common.offerType,
         pickupToday: data.common.storePickupAvailableToday || false,
-        onlinePrice: data.online.price.priceInCents / 100
       };
-    }
 
+      if (data.online && data.online.price && data.online.price.priceInCents) {
+        storePrice.onlinePrice = data.online.price.priceInCents / 100;
+      } else {
+        storePrice.onlinePrice = 0;
+      }
+    }
     return storePrice;
    })
   .catch(err => {
