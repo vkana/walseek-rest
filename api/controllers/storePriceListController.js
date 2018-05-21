@@ -42,7 +42,7 @@ const wmStoreSearch = (upc, store) => {
   });
 }
 
-const searchStores = async (upc, start, numStores, zip) => {
+const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
   let allStores = [];
   let sliceStores =5;
   if (zip) {
@@ -58,7 +58,7 @@ const searchStores = async (upc, start, numStores, zip) => {
   });
 
   await Promise.all(promiseArray).then(resultArray => {
-    storePrices = resultArray.filter(s => s && s.price)
+    storePrices = resultArray.filter(s => s && s.price && (inStockOnly ? s.stock === 'In Stock' : true))
                             .sort((a, b) => {return a.price - b.price})
                             .slice(0,sliceStores);
   })
@@ -89,7 +89,8 @@ exports.search_stores = async (req, res) => {
   let start = parseInt(req.query.start) || 0;
   let numStores = parseInt(req.query.stores) || 100;
   let zip = parseInt(req.query.zip) || null;
-  let storePrices = await searchStores(upc, start, numStores, zip);
+  let inStockOnly = (req.query.inStockOnly && req.query.inStockOnly.toUpperCase() === 'TRUE') || false;
+  let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly);
   let item = {};
   if (storePrices && storePrices.length >0) {
     item = (({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}) => ({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}))(storePrices[0]);
