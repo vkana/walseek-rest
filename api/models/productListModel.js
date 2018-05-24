@@ -20,6 +20,10 @@ var ProductSchema = new Schema({
     type: Number,
     required: 'zip'
   },
+  userZip: {
+    type: Number,
+    required: 'userZip'
+  },
   createdDate: {
     type: Date,
     default: Date.now
