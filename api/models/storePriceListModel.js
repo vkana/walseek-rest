@@ -20,6 +20,10 @@ var StorePriceSchema = new Schema({
     type: Number,
     required: 'zip'
   },
+  zip: {
+    type: Number,
+    required: 'userZip'
+  },
   createdDate: {
     type: Date,
     default: Date.now
