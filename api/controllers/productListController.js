@@ -4,9 +4,8 @@ var mongoose = require('mongoose'),
   Product = mongoose.model('Products');
 
 exports.list_all_products = (req, res) => {
-  Product.find({})
+  Product.find({name:{$regex: req.query.q ||'', $options: 'i'}})
    .sort('-createdDate')
-   .find({name:{$regex: req.query.q ||'', $options: 'i'}})
    .limit(parseInt(req.query.count) || null)
    .exec((err, product) => {
      if (err)
