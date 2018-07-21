@@ -84,6 +84,31 @@ const storesByZip = async (zip) => {
   return stores;
 };
 
+const getstoreQuantity = async (upc, storesList) => {
+
+  let url = 'https://search.mobile.walmart.com/v1/items-in-stores';
+  let resp = await axios.get(url, {
+    params: {storeIds: storesList, barcodes: getWUPC(upc)}
+  }).catch(err => {
+    console.log(err);
+  });
+  let quantities = [];
+  if (resp && resp.data && resp.data.data) {
+     quantities = resp.data.data.map(st => {
+       let obj = {};
+       obj.no = st.storeId;
+       obj.qty = st.availabilityInStore;
+       obj.location = (st.location.aisle ||'') + (st.location.zone||'') + '-' + (st.location.section || '');
+       obj.unitPrice = st.unitPrice;
+       return obj;
+    });
+  }
+
+  return quantities;
+};
+
+const getWUPC = (upc) => 'WUPC.00' + upc.slice(0, -1);
+
 exports.search_stores = async (req, res) => {
   let upc = req.params.productId;
   let start = parseInt(req.query.start) || 0;
@@ -93,8 +118,12 @@ exports.search_stores = async (req, res) => {
   let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly);
   let item = {};
   if (storePrices && storePrices.length >0) {
+    let storeQuantities = await getstoreQuantity(upc, storePrices.map(s => s.no).join());
     item = (({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}) => ({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}))(storePrices[0]);
-    storePrices = storePrices.map(s => {return {no:s.no, address: s.address, zip:s.zip, price:s.price, stock:s.stock, pickupToday: s.pickupToday}});
+    storePrices = storePrices.map(s => {
+      let qtyObj = storeQuantities.find(q => q.no === s.no);
+      return {no:s.no, address: s.address, zip:s.zip, price:s.price, stock:s.stock, pickupToday: s.pickupToday, qty: qtyObj.qty, location: qtyObj.location};
+    });
   }
   else {
     storePrices=[];
