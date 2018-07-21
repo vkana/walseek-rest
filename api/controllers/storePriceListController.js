@@ -98,7 +98,7 @@ const getstoreQuantity = async (upc, storesList) => {
        let obj = {};
        obj.no = st.storeId;
        obj.qty = st.availabilityInStore;
-       obj.location = (st.location.aisle ||'') + (st.location.zone||'') + '-' + (st.location.section || '');
+       obj.location = (st.location.zone ||'') + (st.location.aisle||'') + '-' + (st.location.section || '');
        obj.unitPrice = st.unitPrice;
        return obj;
     });
