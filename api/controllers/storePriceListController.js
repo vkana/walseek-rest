@@ -122,7 +122,7 @@ exports.search_stores = async (req, res) => {
     item = (({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}) => ({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}))(storePrices[0]);
     storePrices = storePrices.map(s => {
       let qtyObj = storeQuantities.find(q => q.no === s.no);
-      return {no:s.no, address: s.address, zip:s.zip, price:s.price, stock:s.stock, pickupToday: s.pickupToday, qty: qtyObj.qty, location: qtyObj.location};
+      return {no:s.no, address: s.address, zip:s.zip, price:s.price, stock:s.stock, pickupToday: s.pickupToday, qty: (qtyObj && qtyObj.qty||0), location: (qtyObj && qtyObj.location||'-')};
     });
   }
   else {
