@@ -143,7 +143,7 @@ exports.get_upc = async (req, res) => {
   let response = await axios.get(url);
   let resp = {
     "upc": response.data.upc,
-    "variants": (response.data.variants)?response.data.variants.join():[]
+    "variants": (response.data.variants)?response.data.variants.join(', '):[]
   };
   res.json(resp);
 };
