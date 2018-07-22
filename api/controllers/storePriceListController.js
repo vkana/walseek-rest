@@ -142,7 +142,8 @@ exports.get_upc = async (req, res) => {
   const url = `https://api.walmartlabs.com/v1/items/${sku}?apiKey=${apiKey}`;
   let response = await axios.get(url);
   let resp = {
-    "upc": response.data.upc
+    "upc": response.data.upc,
+    "variants": (response.data.variants)?response.data.variants.join():[]
   };
   res.json(resp);
 };
