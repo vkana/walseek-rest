@@ -12,6 +12,10 @@ var ProductSchema = new Schema({
     type: Number,
     required: 'sku'
   },
+  upc: {
+    type: Number,
+    required: 'sku'
+  },
   price: {
     type: Number,
     required: 'price'
