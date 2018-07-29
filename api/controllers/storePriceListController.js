@@ -142,10 +142,13 @@ exports.get_upc = async (req, res) => {
   let sku = req.params.sku;
   const apiKey = secrets.apiKey;
   const url = `https://api.walmartlabs.com/v1/items/${sku}?apiKey=${apiKey}`;
-  let response = await axios.get(url);
+  let response = await axios.get(url).catch(err => {
+    console.log('error: ', err.response.status, err.response.statusText, sku);
+    return err.response;
+  });
   let resp = {
-    "upc": response.data.upc,
-    "variants": (response.data.variants)?response.data.variants.join(', '):[]
+    "upc": (response.data && response.data.upc)?response.data.upc : 0,
+    "variants": (response.data && response.data.variants)?response.data.variants.join(', ') : []
   };
   res.json(resp);
 };
