@@ -1,15 +1,12 @@
 'use strict';
 const axios = require('axios');
+const _ = require('lodash');
 const stores = require('../../stores.json');
 const secrets = require('../../secrets.json');
 
 const wmStoreSearch = (upc, store) => {
   let url = `https://search.mobile.walmart.com/v1/products-by-code/UPC/${upc}`;
-  let storePrice = {
-    no:store.no,
-    address: store.address || store.streetAddress,
-    zip: store.zip
-  }
+  let storePrice = {};
   return axios.get(url, {
     params: {storeId: store.no}
   })
@@ -17,10 +14,7 @@ const wmStoreSearch = (upc, store) => {
     let data = response.data.data;
     if (data.inStore && data.inStore.price && data.inStore.price.priceInCents) {
       storePrice = {
-        ...storePrice,
-        price: data.inStore.price.priceInCents / 100,
-        stock: (data.inStore.inventory) ? data.inStore.inventory.status : 'NA',
-        //item
+        no: store.no,
         name: data.common.name,
         sku: data.common.productId.wwwItemId,
         upc: data.common.productId.upca,
@@ -42,26 +36,42 @@ const wmStoreSearch = (upc, store) => {
   });
 }
 
-const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
-  let allStores = [];
-  let sliceStores =5;
-  if (zip) {
-    allStores = await storesByZip(zip);
-    sliceStores = 100;
-  } else {
-    allStores = stores.allStores;
-  }
-
-  let [storePrices, promiseArray, errorCount] = [[], [], 0];
-  allStores.slice(start, start + numStores).map(store => {
-    promiseArray.push(wmStoreSearch(upc, store).catch(err=>{errorCount++}));
+const getPickupTodayStatus = async (upc, stores) => {
+  let promiseArray = [];
+  stores.map(store => {
+    promiseArray.push(wmStoreSearch(upc, store).catch(err=>{}));
   });
 
-  await Promise.all(promiseArray).then(resultArray => {
-    storePrices = resultArray.filter(s => s && s.price && (inStockOnly ? s.stock === 'In Stock' : true))
-                            .sort((a, b) => {return a.price - b.price})
-                            .slice(0,sliceStores);
-  })
+  return  await Promise.all(promiseArray).then(resultArray => {
+    return resultArray;
+  });
+}
+
+const mergeDetails = (storePrices, stores) => {
+  return  _.map(storePrices, sp => {
+    let st =  _.find(stores, st => {return st.no === sp.no});
+    return {...sp, ...st};
+ });
+}
+
+const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
+  let [storePrices, allStores, resultCount] = [[], [], 5];
+
+  if (zip) {
+    allStores = await storesByZip(zip);
+    resultCount = 100;
+  } else {
+    allStores = stores.allStores.slice(start, start + numStores);
+  }
+
+  let storesList = allStores.map(s => s.no).join();
+  storePrices = await getstorePrices(upc, storesList)
+  storePrices = storePrices.filter(s => s.price  && (inStockOnly ? s.stock === 'In Stock' : true))
+    .sort((a, b) => {return a.price - b.price})
+    .slice(0, resultCount);
+  let moreDetails = await getPickupTodayStatus(upc, storePrices);
+  storePrices = mergeDetails(storePrices, moreDetails);
+  storePrices = mergeDetails(storePrices, allStores);
 
   return storePrices;
 }
@@ -75,7 +85,6 @@ const storesByZip = async (zip) => {
     stores = resp.data.map(store => {
       let theStore = {};
       theStore.no = store.no;
-      theStore.description = store.name;
       theStore.address = store.streetAddress + ', ' + store.city + ' ' + store.stateProvCode;
       theStore.zip = store.zip;
       return theStore;
@@ -84,14 +93,11 @@ const storesByZip = async (zip) => {
   return stores;
 };
 
-const getstoreQuantity = async (upc, storesList) => {
-
+const getstorePrices = async (upc, storesList) => {
   let url = 'https://search.mobile.walmart.com/v1/items-in-stores';
   let resp = await axios.get(url, {
     params: {storeIds: storesList, barcodes: getWUPC(upc)}
-  }).catch(err => {
-    console.log(err);
-  });
+  }).catch(err => {});
   let quantities = [];
   if (resp && resp.data && resp.data.data) {
      quantities = resp.data.data.map(st => {
@@ -99,7 +105,8 @@ const getstoreQuantity = async (upc, storesList) => {
        obj.no = st.storeId;
        obj.qty = st.availabilityInStore;
        obj.location = (st.location.zone ||'') + (st.location.aisle||'') + '-' + (st.location.section || '');
-       obj.unitPrice = st.unitPrice;
+       obj.price = st.unitPrice;
+       obj.stock = st.stockStatus;
        return obj;
     });
   }
@@ -112,18 +119,13 @@ const getWUPC = (upc) => 'WUPC.00' + upc.slice(0, -1);
 exports.search_stores = async (req, res) => {
   let upc = req.params.productId;
   let start = parseInt(req.query.start) || 0;
-  let numStores = parseInt(req.query.stores) || 100;
+  let numStores = parseInt(req.query.stores) || 300;
   let zip = parseInt(req.query.zip) || null;
   let inStockOnly = (req.query.inStockOnly && req.query.inStockOnly.toUpperCase() === 'TRUE') || false;
   let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly);
   let item = {};
   if (storePrices && storePrices.length >0) {
-    let storeQuantities = await getstoreQuantity(upc, storePrices.map(s => s.no).join());
-    item = (({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}) => ({name, sku, upc, url, bsUrl, offerType, pickupToday, onlinePrice}))(storePrices[0]);
-    storePrices = storePrices.map(s => {
-      let qtyObj = storeQuantities.find(q => q.no === s.no);
-      return {no:s.no, address: s.address, zip:s.zip, price:s.price, stock:s.stock, pickupToday: s.pickupToday, qty: (qtyObj && qtyObj.qty||0), location: (qtyObj && qtyObj.location||'-')};
-    });
+    item = (({name, sku, upc, url, bsUrl, offerType, onlinePrice}) => ({name, sku, upc, url, bsUrl, offerType, onlinePrice}))(storePrices[0]);
   }
   else {
     storePrices=[];
