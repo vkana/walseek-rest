@@ -80,12 +80,10 @@ exports.delete_a_product = (req, res) => {
 exports.get_upc = async (req, res) => {
   let resp = {};
   let sku = req.params.sku;
-  resp = await getItemFromDb(sku);
-  if (resp && resp.upc) {
+  resp = await getItemFromWm(sku);
+  if (!resp || !resp.upc) {
+    resp = await getItemFromDb(sku);
     resp = {upc:resp.upc, variants: resp.variants || ''};
-  }
-  else {
-    resp = await getItemFromWm(sku);
   }
   res.json(resp);
 };
