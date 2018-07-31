@@ -1,7 +1,29 @@
 'use strict';
+const secrets = require('../../secrets.json');
+const axios = require('axios');
 
 var mongoose = require('mongoose'),
   Product = mongoose.model('Products');
+
+const getItemFromDb = async (sku) => {
+  return Product.findOne({sku: sku})
+    .exec();
+};
+
+const getItemFromWm = async (sku) => {
+  const apiKey = secrets.apiKey;
+  const url = `https://api.walmartlabs.com/v1/items/${sku}?apiKey=${apiKey}`;
+  let response = await axios.get(url).catch(err => {
+    console.log('error: ', err.response.status, err.response.statusText, sku);
+    return err.response;
+  });
+  let resp = {
+    "upc": (response.data && response.data.upc)?response.data.upc : 0,
+    "variants": (response.data && response.data.variants)?response.data.variants.join(', ') : []
+  };
+
+  return resp;
+};
 
 exports.list_all_products = (req, res) => {
   Product.find({name:{$regex: req.query.q ||'', $options: 'i'}})
@@ -15,7 +37,7 @@ exports.list_all_products = (req, res) => {
  };
 
 exports.create_a_product = (req, res) => {
-  var new_product = {...req.body, createdDate: Date.now()};
+  let new_product = {...req.body, createdDate: Date.now()};
   //this is supposed to be PUT?
   Product.findOneAndUpdate({sku: new_product.sku},
           new_product, {upsert: true, new: true}, (err, product) => {
@@ -53,4 +75,17 @@ exports.delete_a_product = (req, res) => {
         res.send(err);
       res.json({ message: 'Product successfully deleted' });
     });
+};
+
+exports.get_upc = async (req, res) => {
+  let resp = {};
+  let sku = req.params.sku;
+  resp = await getItemFromDb(sku);
+  if (resp && resp.upc) {
+    resp = {upc:resp.upc, variants: resp.variants || []};
+  }
+  else {
+    resp = await getItemFromWm(sku);
+  }
+  res.json(resp);
 };

@@ -11,4 +11,7 @@ module.exports = function(app) {
     .get(productList.read_a_product)
     .put(productList.update_a_product)
     .delete(productList.delete_a_product);
+
+    app.route('/upc/:sku')
+      .get(productList.get_upc);
 };
