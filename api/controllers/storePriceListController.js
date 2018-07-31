@@ -80,7 +80,11 @@ const storesByZip = async (zip) => {
   const apiKey = secrets.apiKey;
   let stores = [];
   const url = `https://api.walmartlabs.com/v1/stores?format=json&zip=${zip}&apiKey=${apiKey}`;
-  let resp = await axios.get(url);
+  let resp = await axios.get(url)
+    .catch(err => {
+      console.log('error: ', err.response.status, err.response.statusText, zip);
+      return err.response;
+    });
   if (resp.data && resp.data.length > 0) {
     stores = resp.data.map(store => {
       let theStore = {};

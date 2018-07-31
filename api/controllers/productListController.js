@@ -19,7 +19,7 @@ const getItemFromWm = async (sku) => {
   });
   let resp = {
     "upc": (response.data && response.data.upc)?response.data.upc : 0,
-    "variants": (response.data && response.data.variants)?response.data.variants.join(', ') : []
+    "variants": (response.data && response.data.variants)?response.data.variants.join(', ') : ''
   };
 
   return resp;
@@ -82,7 +82,7 @@ exports.get_upc = async (req, res) => {
   let sku = req.params.sku;
   resp = await getItemFromDb(sku);
   if (resp && resp.upc) {
-    resp = {upc:resp.upc, variants: resp.variants || []};
+    resp = {upc:resp.upc, variants: resp.variants || ''};
   }
   else {
     resp = await getItemFromWm(sku);
