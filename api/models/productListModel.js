@@ -13,7 +13,7 @@ var ProductSchema = new Schema({
     required: 'sku'
   },
   upc: {
-    type: Number,
+    type: String,
     required: 'sku'
   },
   price: {
@@ -27,6 +27,10 @@ var ProductSchema = new Schema({
   userZip: {
     type: Number,
     required: 'userZip'
+  },
+  variants: {
+    type: String,
+    required: 'variants'
   },
   createdDate: {
     type: Date,
