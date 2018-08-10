@@ -66,7 +66,7 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
 
   let storesList = allStores.map(s => s.no).join();
   storePrices = await getstorePrices(upc, storesList)
-  storePrices = storePrices.filter(s => s.price  && (inStockOnly ? s.stock === 'In Stock' : true))
+  storePrices = storePrices.filter(s => s.price  && (inStockOnly ? (s.stock.startsWith('In') || s.stock.startsWith('Limited')) : true))
     .sort((a, b) => {return a.price - b.price})
     .slice(0, resultCount);
   let moreDetails = await getPickupTodayStatus(upc, storePrices);
