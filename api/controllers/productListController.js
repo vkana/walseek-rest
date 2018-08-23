@@ -38,6 +38,8 @@ exports.list_all_products = (req, res) => {
 
 exports.create_a_product = (req, res) => {
   let new_product = {...req.body, createdDate: Date.now()};
+  new_product.$addToSet =  {stores: new_product.stores};
+  delete new_product.stores;
   //this is supposed to be PUT?
   Product.findOneAndUpdate({sku: new_product.sku},
           new_product, {upsert: true, new: true}, (err, product) => {

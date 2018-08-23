@@ -35,6 +35,10 @@ var ProductSchema = new Schema({
   createdDate: {
     type: Date,
     default: Date.now
+  },
+  stores: {
+    type: Array,
+    default: []
   }
 });
 

@@ -65,14 +65,20 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
   }
 
   let storesList = allStores.map(s => s.no).join();
-  storePrices = await getstorePrices(upc, storesList)
+  storePrices = await getstorePrices(upc, storesList);
+  let inStockStores = [];
+  if (zip) {
+    inStockStores = storePrices.filter(s => s.qty>0).map(s => {return s.no;});
+  }
   storePrices = storePrices.filter(s => s.price  && (inStockOnly ? (s.stock.startsWith('In') || s.stock.startsWith('Limited')) : true))
     .sort((a, b) => {return a.price - b.price})
     .slice(0, resultCount);
   let moreDetails = await getPickupTodayStatus(upc, storePrices);
   storePrices = mergeDetails(storePrices, moreDetails);
   storePrices = mergeDetails(storePrices, allStores);
-
+  if (zip) {
+    storePrices[0].stores = inStockStores;
+  }
   return storePrices;
 }
 
@@ -129,7 +135,7 @@ exports.search_stores = async (req, res) => {
   let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly);
   let item = {};
   if (storePrices && storePrices.length >0) {
-    item = (({name, sku, upc, url, bsUrl, offerType, onlinePrice}) => ({name, sku, upc, url, bsUrl, offerType, onlinePrice}))(storePrices[0]);
+    item = (({name, sku, upc, url, bsUrl, offerType, onlinePrice, stores}) => ({name, sku, upc, url, bsUrl, offerType, onlinePrice, stores}))(storePrices[0]);
   }
   else {
     storePrices=[];
