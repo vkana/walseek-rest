@@ -26,7 +26,8 @@ const getItemFromWm = async (sku) => {
 };
 
 exports.list_all_products = (req, res) => {
-  Product.find({name:{$regex: req.query.q ||'', $options: 'i'}})
+  let qNum = parseInt(req.query.q) || 0;
+  Product.find({$or:[{name:{$regex: req.query.q ||'', $options: 'i'}}, {sku: qNum}, {upc: qNum}, {stores: qNum}]})
    .sort('-createdDate')
    .limit(parseInt(req.query.count) || null)
    .exec((err, product) => {
