@@ -77,7 +77,9 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
   storePrices = mergeDetails(storePrices, moreDetails);
   storePrices = mergeDetails(storePrices, allStores);
   if (zip) {
-    storePrices[0].stores = inStockStores;
+    if (storePrices && storePrices[0]) {
+      storePrices[0].stores = inStockStores;  
+    }
   }
   return storePrices;
 }
