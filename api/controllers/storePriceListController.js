@@ -43,7 +43,7 @@ const getPickupTodayStatus = async (upc, stores) => {
   });
 
   return  await Promise.all(promiseArray).then(resultArray => {
-    return resultArray;
+    return resultArray.filter(e => {return e && e.no});
   });
 }
 
@@ -78,7 +78,7 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
   storePrices = mergeDetails(storePrices, allStores);
   if (zip) {
     if (storePrices && storePrices[0]) {
-      storePrices[0].stores = inStockStores;  
+      storePrices[0].stores = inStockStores;
     }
   }
   return storePrices;
