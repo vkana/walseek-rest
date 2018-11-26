@@ -52,8 +52,8 @@ const getPickupTodayStatus = async (upc, stores) => {
 
 const mergeDetails = (storePrices, stores) => {
   return  _.map(storePrices, sp => {
-    let st =  _.find(stores, st => {return st.no === sp.no});
-    return {...sp, ...st};
+    let str =  _.find(stores, st => { console.log(st.no, sp.no); return st.no == sp.no});
+    return {...sp, ...str};
  });
 }
 
@@ -131,7 +131,7 @@ const getstorePrices = async (upc, storesList) => {
     storesList.split(',').map(s => {
       let obj = {};
       obj.no = s;
-      obj.qty = 0;
+      obj.qty = 'NA';
       quantities.push(obj);
     })
   }
