@@ -33,6 +33,8 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
       else if ( response.data.products[0].storeInfo && response.data.products[0].storeInfo.price) {
         price = {
           no: st.no,
+          address: st.address,
+          zip:st.zip,
           price: response.data.products[0].storeInfo.price.currentPrice,
           stock: response.data.products[0].storeInfo.availabilityCode || '-'
         };
@@ -47,7 +49,8 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
     .filter(a => null!= a.price)
     .sort((a, b) => a.price - b.price)
     .slice(0,3);
-  console.log(storePrices);
+  //console.log(storePrices);
+  storePrices.map(sp => console.log(sp.price));
   return storePrices;
 }
 //***

@@ -22,6 +22,9 @@ const wmStoreSearch = (upc, store) => {
         bsUrl: `https://www.brickseek.com/walmart-inventory-checker?sku=${data.common.productId.wwwItemId}`,
         offerType: data.common.offerType,
         pickupToday: data.common.storePickupAvailableToday || false,
+        //temp fix
+        price: data.inStore.price.priceInCents / 100 || 0,
+        stock: data.inStore.inventory.status
       };
 
       if (data.online && data.online.price && data.online.price.priceInCents) {
@@ -55,7 +58,7 @@ const mergeDetails = (storePrices, stores) => {
 }
 
 const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
-  let [storePrices, allStores, resultCount] = [[], [], 5];
+  let [storePrices, allStores, resultCount] = [[], [], numStores]; // temp fix
 
   if (zip) {
     allStores = await storesByZip(zip);
@@ -70,12 +73,14 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
   if (zip) {
     inStockStores = storePrices.filter(s => s.qty>0).map(s => {return s.no;});
   }
-  storePrices = storePrices.filter(s => s.price  && (inStockOnly ? (s.stock.startsWith('In') || s.stock.startsWith('Limited')) : true))
+  //s.price  && - temp fix. put it back
+  storePrices = storePrices.filter(s =>  (inStockOnly ? (s.stock.startsWith('In') || s.stock.startsWith('Limited')) : true))
     .sort((a, b) => {return a.price - b.price})
     .slice(0, resultCount);
+
   let moreDetails = await getPickupTodayStatus(upc, storePrices);
   storePrices = mergeDetails(storePrices, moreDetails);
-  storePrices = mergeDetails(storePrices, allStores);
+  storePrices = mergeDetails(storePrices, allStores).filter(p => p.price); //temp fix
   if (zip) {
     if (storePrices && storePrices[0]) {
       storePrices[0].stores = inStockStores;
@@ -122,7 +127,14 @@ const getstorePrices = async (upc, storesList) => {
        return obj;
     });
   }
-
+  else { //temp fix
+    storesList.split(',').map(s => {
+      let obj = {};
+      obj.no = s;
+      obj.qty = 0;
+      quantities.push(obj);
+    })
+  }
   return quantities;
 };
 
