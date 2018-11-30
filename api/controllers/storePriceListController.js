@@ -131,7 +131,7 @@ const getWUPC = (upc) => 'WUPC.00' + upc.slice(0, -1);
 exports.search_stores = async (req, res) => {
   let upc = req.params.productId;
   let start = parseInt(req.query.start) || 0;
-  let numStores = parseInt(req.query.stores) || 300;
+  let numStores = parseInt(req.query.stores) || 10;
   let zip = parseInt(req.query.zip) || null;
   let inStockOnly = (req.query.inStockOnly && req.query.inStockOnly.toUpperCase() === 'TRUE') || false;
   let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly);
