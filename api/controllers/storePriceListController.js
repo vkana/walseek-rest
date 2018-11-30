@@ -55,7 +55,7 @@ const mergeDetails = (storePrices, stores) => {
 }
 
 const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
-  let [storePrices, allStores, resultCount] = [[], [], 5];
+  let [storePrices, allStores, resultCount] = [[], [], 2];
 
   if (zip) {
     allStores = await storesByZip(zip);
