@@ -55,7 +55,7 @@ const mergeDetails = (storePrices, stores) => {
 }
 
 const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
-  let [storePrices, allStores, resultCount] = [[], [], 2];
+  let [storePrices, allStores, resultCount] = [[], [], 5];
 
   if (zip) {
     allStores = await storesByZip(zip);
@@ -64,8 +64,7 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
     allStores = stores.allStores.slice(start, start + numStores);
   }
 
-  let storesList = allStores.map(s => s.no).join();
-  storePrices = await getstorePrices(upc, storesList);
+  storePrices = await getPrices(upc, allStores);
   let inStockStores = [];
   if (zip) {
     inStockStores = storePrices.filter(s => s.qty>0).map(s => {return s.no;});
@@ -73,6 +72,8 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly) => {
   storePrices = storePrices.filter(s => s.price  && (inStockOnly ? (s.stock.startsWith('In') || s.stock.startsWith('Limited')) : true))
     .sort((a, b) => {return a.price - b.price})
     .slice(0, resultCount);
+
+
   let moreDetails = await getPickupTodayStatus(upc, storePrices);
   storePrices = mergeDetails(storePrices, moreDetails);
   storePrices = mergeDetails(storePrices, allStores);
@@ -105,10 +106,10 @@ const storesByZip = async (zip) => {
   return stores;
 };
 
-const getstorePrices = async (upc, storesList) => {
+const getstorePrices = async (wupc, storesList) => {
   let url = 'https://search.mobile.walmart.com/v1/items-in-stores';
   let resp = await axios.get(url, {
-    params: {storeIds: storesList, barcodes: getWUPC(upc)}
+    params: {storeIds: storesList, barcodes: wupc}
   }).catch(err => {});
   let quantities = [];
   if (resp && resp.data && resp.data.data) {
@@ -125,6 +126,23 @@ const getstorePrices = async (upc, storesList) => {
 
   return quantities;
 };
+
+const getPrices = async(upc, storesList) => {
+
+  let storeCount = 10;
+  let storesString = '';
+  let promiseArray = [];
+
+  for (let i = 0; i<storesList.length; i += storeCount) {
+    storesString = storesList.slice(i, i + storeCount).map(s => s.no).join();
+    promiseArray.push(getstorePrices(getWUPC(upc), storesString).catch(err=>{}));
+  }
+
+  return await Promise.all(promiseArray).then( resultArray => {
+    return [].concat.apply([],resultArray).filter(e=> {return e && e.no});
+  });
+};
+
 
 const getWUPC = (upc) => 'WUPC.00' + upc.slice(0, -1);
 
