@@ -13,6 +13,7 @@ const getItemFromDb = async (sku) => {
 const getItemFromWm = async (sku) => {
   const apiKey = secrets.apiKey;
   const url = `https://api.walmartlabs.com/v1/items/${sku}?apiKey=${apiKey}`;
+  console.log(url);
   let response = await axios.get(url).catch(err => {
     console.log('error: ', err.response.status, err.response.statusText, sku);
     return err.response;
@@ -83,10 +84,15 @@ exports.delete_a_product = (req, res) => {
 exports.get_upc = async (req, res) => {
   let resp = {};
   let sku = req.params.sku;
-  resp = await getItemFromWm(sku);
-  if (!resp || !resp.upc) {
-    resp = await getItemFromDb(sku);
+  resp = await getItemFromDb(sku); 
+  if (resp && resp.upc) {
     resp = {upc:resp.upc, variants: resp.variants || ''};
+    console.log('db ', resp);
   }
+  else {
+    resp = await getItemFromWm(sku);
+    console.log('wm ', resp);
+  }
+
   res.json(resp);
 };
