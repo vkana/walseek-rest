@@ -54,7 +54,7 @@ const mergeDetails = (storePrices, stores) => {
  });
 }
 
-const searchStores = async (upc, start, numStores, zip, inStockOnly, minQty) => {
+const searchStores = async (upc, start, numStores, zip, inStockOnly, minQty, aisle) => {
   let [storePrices, allStores, resultCount] = [[], [], 5];
 
   if (zip) {
@@ -70,10 +70,13 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly, minQty) => 
     inStockStores = storePrices.filter(s => s.qty>0).map(s => {return s.no;});
   }
   storePrices = storePrices.filter(s => s.price  
-    && (inStockOnly ? (s.stock.startsWith('In') || s.stock.startsWith('Limited')) : true)
-    && (minQty? s.qty >= minQty : true))
+    && (inStockOnly ? s.qty > 0 : true)
+    && (minQty ? s.qty >= minQty : true)
+    && (aisle ? s.location != '-' : true))
     .sort((a, b) => {return a.price - b.price})
     .slice(0, resultCount);
+
+    console.log('storeprices',storePrices);
 
   let moreDetails = await getPickupTodayStatus(upc, storePrices);
   storePrices = mergeDetails(storePrices, moreDetails);
@@ -154,7 +157,8 @@ exports.search_stores = async (req, res) => {
   let zip = parseInt(req.query.zip) || null;
   let inStockOnly = (req.query.inStockOnly && req.query.inStockOnly.toUpperCase() === 'TRUE') || false;
   let minQty = parseInt(req.query.minqty);
-  let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly, minQty);
+  let aisle = (req.query.aisle && req.query.aisle.toUpperCase() === 'TRUE') || false;
+  let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly, minQty, aisle);
   let item = {};
   if (storePrices && storePrices.length >0) {
     item = (({name, sku, upc, url, bsUrl, offerType, onlinePrice, stores}) => ({name, sku, upc, url, bsUrl, offerType, onlinePrice, stores}))(storePrices[0]);
