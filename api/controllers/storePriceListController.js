@@ -22,6 +22,9 @@ const wmStoreSearch = (upc, store) => {
         bsUrl: `https://www.brickseek.com/walmart-inventory-checker?sku=${data.common.productId.wwwItemId}`,
         offerType: data.common.offerType,
         pickupToday: data.common.storePickupAvailableToday || false,
+        price: data.inStore.price.priceInCents / 100,
+        qty: data.inStore.inventory.quantity,
+        stock: data.inStore.inventory.status
       };
 
       if (data.online && data.online.price && data.online.price.priceInCents) {
@@ -86,7 +89,7 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly, minQty, ais
       storePrices[0].stores = inStockStores;
     }
   }
-  return storePrices;
+  return storePrices.filter(s => s.qty > -1);
 }
 
 const storesByZip = async (zip) => {
@@ -110,7 +113,7 @@ const storesByZip = async (zip) => {
   return stores;
 };
 
-const getstorePrices = async (wupc, storesList) => {
+const getStorePrices = async (wupc, storesList) => {
   let url = 'https://search.mobile.walmart.com/v1/items-in-stores';
   let resp = await axios.get(url, {
     params: {storeIds: storesList, barcodes: wupc}
@@ -126,6 +129,17 @@ const getstorePrices = async (wupc, storesList) => {
        obj.stock = st.stockStatus;
        return obj;
     });
+  } else {
+    console.log('here else temp fix');
+    quantities =  storesList.split(',').map(s => {
+      let obj = {};
+      obj.no = s;
+      obj.qty = -1;
+      obj.location = '';
+      obj.price = 0.01;
+      obj.stock = '';
+      return obj;
+    });
   }
 
   return quantities;
@@ -139,7 +153,7 @@ const getPrices = async(upc, storesList) => {
 
   for (let i = 0; i<storesList.length; i += storeCount) {
     storesString = storesList.slice(i, i + storeCount).map(s => s.no).join();
-    promiseArray.push(getstorePrices(getWUPC(upc), storesString).catch(err=>{}));
+    promiseArray.push(getStorePrices(getWUPC(upc), storesString).catch(err=>{}));
   }
 
   return await Promise.all(promiseArray).then( resultArray => {
