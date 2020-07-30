@@ -79,8 +79,6 @@ const searchStores = async (upc, start, numStores, zip, inStockOnly, minQty, ais
     .sort((a, b) => {return a.price - b.price})
     .slice(0, resultCount);
 
-    console.log('storeprices',storePrices);
-
   let moreDetails = await getPickupTodayStatus(upc, storePrices);
   storePrices = mergeDetails(storePrices, moreDetails);
   storePrices = mergeDetails(storePrices, allStores);
@@ -118,6 +116,7 @@ const getStorePrices = async (wupc, storesList) => {
   let resp = await axios.get(url, {
     params: {storeIds: storesList, barcodes: wupc}
   }).catch(err => {});
+
   let quantities = [];
   if (resp && resp.data && resp.data.data) {
      quantities = resp.data.data.map(st => {
@@ -130,7 +129,6 @@ const getStorePrices = async (wupc, storesList) => {
        return obj;
     });
   } else {
-    console.log('here else temp fix');
     quantities =  storesList.split(',').map(s => {
       let obj = {};
       obj.no = s;
@@ -170,9 +168,15 @@ exports.search_stores = async (req, res) => {
   let numStores = parseInt(req.query.stores) || 10;
   let zip = parseInt(req.query.zip) || null;
   let inStockOnly = (req.query.inStockOnly && req.query.inStockOnly.toUpperCase() === 'TRUE') || false;
-  let minQty = parseInt(req.query.minqty);
+  let minQty = parseInt(req.query.minqty)|| 0;
   let aisle = (req.query.aisle && req.query.aisle.toUpperCase() === 'TRUE') || false;
   let storePrices = await searchStores(upc, start, numStores, zip, inStockOnly, minQty, aisle);
+  storePrices = storePrices.map(s => {
+    let theStore = stores.allStores.filter(st => {return (st.no == s.no)});
+    s.address = theStore[0].address;
+    s.zip = theStore[0].zip;
+    return s;
+  });
   let item = {};
   if (storePrices && storePrices.length >0) {
     item = (({name, sku, upc, url, bsUrl, offerType, onlinePrice, stores}) => ({name, sku, upc, url, bsUrl, offerType, onlinePrice, stores}))(storePrices[0]);

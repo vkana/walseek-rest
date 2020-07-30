@@ -30,7 +30,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 // mongoose instance connection url connection
 mongoose.Promise = global.Promise;
-mongoose.connect(dbConnString);
+mongoose.connect(dbConnString,  { useNewUrlParser: true,  useUnifiedTopology: true });
 
 app.get('/*', function(req, res, next){
   res.setHeader('Last-Modified', (new Date()).toUTCString());
